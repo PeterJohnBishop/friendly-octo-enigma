@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/peterjohnbishop/friendly-octo-enigma/server/processors"
 )
 
 func ServeGin() {
@@ -12,10 +13,13 @@ func ServeGin() {
 	r := gin.Default()
 	r.Use(gin.Recovery())
 
-	inspectHeaders := make(chan map[string][]string)
-	inspectBody := make(chan []byte)
+	inspectHeaders := make(chan map[string][]string, 100)
+	inspectBody := make(chan []byte, 100)
 
 	AddWebhooks(r, inspectHeaders, inspectBody)
+
+	go processors.MapAndMergeHeaders(inspectHeaders)
+	go processors.MapBody(inspectBody)
 
 	if err := r.Run(); err != nil {
 		log.Fatalf("failed to run server: %v", err)

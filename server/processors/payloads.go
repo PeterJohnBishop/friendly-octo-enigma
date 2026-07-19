@@ -1,4 +1,4 @@
-// Package processors handles data processing for endpoints
+// Package processors identify data in the webhook payload that can be passed to the transformers.
 package processors
 
 import (

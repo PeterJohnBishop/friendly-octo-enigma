@@ -7,27 +7,26 @@ import (
 	"github.com/peterjohnbishop/friendly-octo-enigma/models"
 	"github.com/peterjohnbishop/friendly-octo-enigma/processors"
 	"github.com/peterjohnbishop/friendly-octo-enigma/server"
+	"github.com/peterjohnbishop/friendly-octo-enigma/tui"
 )
 
 func main() {
-	rawHeaders := make(chan map[string][]string, 100)
-	rawBody := make(chan []byte, 100)
+	rawHeadersChan := make(chan map[string][]string, 100)
+	rawBodyChan := make(chan []byte, 100)
 
 	outputHeadersChan := make(chan map[string][]string, 100)
 	outputBodyChan := make(chan map[string]models.PropertyDetail, 100)
 
-	go processors.MapAndMergeHeaders(rawHeaders, outputHeadersChan)
-	go processors.MapBody(rawBody, outputBodyChan)
-	go server.ServeGin(rawHeaders, rawBody)
+	// the processors startup and wait for raw input, then output the result to the channels to the TUI
+	go processors.MapAndMergeHeaders(rawHeadersChan, outputHeadersChan)
+	go processors.MapBody(rawBodyChan, outputBodyChan)
 
-	for {
-		select {
-		case header := <-outputHeadersChan:
-			prettyPrint("--- HEADER ---", header)
+	// the server hosts the webhook endpoint where raw input is sent, which is output to the raw channels
+	go server.ServeGin(rawHeadersChan, rawBodyChan)
 
-		case body := <-outputBodyChan:
-			prettyPrint("--- BODY ---", body)
-		}
+	// Start TUI on the main thread
+	if err := tui.Start(outputHeadersChan, outputBodyChan); err != nil {
+		fmt.Printf("Error running TUI: %v\n", err)
 	}
 }
 

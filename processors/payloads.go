@@ -14,11 +14,12 @@ func MapAndMergeHeaders(headers chan map[string][]string, mappedHeaders chan map
 
 	for h := range headers {
 		maps.Copy(mergedHeaders, h)
-	}
 
-	prettyHeaders, _ := json.MarshalIndent(mergedHeaders, "", "  ")
-	fmt.Printf("--- Payload Headers -->\n%s\n\n", string(prettyHeaders))
-	mappedHeaders <- mergedHeaders
+		outMap := make(map[string][]string)
+		maps.Copy(outMap, mergedHeaders)
+
+		mappedHeaders <- outMap
+	}
 }
 
 func ProcessValue(val any) models.PropertyDetail {
@@ -48,7 +49,7 @@ func ProcessValue(val any) models.PropertyDetail {
 	}
 }
 
-func MapBody(payloadChan chan []byte, typedPayload chan map[string]models.PropertyDetail) {
+func MapBody(payloadChan chan []byte, typedPayloadChan chan map[string]models.PropertyDetail) {
 	for rawBytes := range payloadChan {
 		var originalData map[string]any
 
@@ -63,7 +64,7 @@ func MapBody(payloadChan chan []byte, typedPayload chan map[string]models.Proper
 			typedPayload[key] = ProcessValue(val)
 		}
 
-		prettyBody, _ := json.MarshalIndent(typedPayload, "", "  ")
-		fmt.Printf("--- Processed Body ---\n%s\n\n", string(prettyBody))
+		typedPayloadChan <- typedPayload
+
 	}
 }

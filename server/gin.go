@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ServeGin(inspectHeaders chan<- map[string][]string, inspectBody chan<- []byte) {
+func ServeGin(inspectHeaders chan map[string][]string, inspectBody chan []byte) {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.Use(gin.Recovery())
+
+	AddWebhooks(r, inspectHeaders, inspectBody)
 
 	if err := r.Run(); err != nil {
 		log.Fatalf("failed to run server: %v", err)

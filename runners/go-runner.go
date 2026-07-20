@@ -1,5 +1,5 @@
-// Package transformers handles execution of scripts natively in memory
-package transformers
+// Package runners handles execution of scripts natively in memory
+package runners
 
 import (
 	"fmt"
